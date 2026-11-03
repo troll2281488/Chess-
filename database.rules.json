@@ -34,9 +34,6 @@
         "$other": {
           ".validate": false
         },
-        "moves": {
-          ".validate": "newData.numChildren() <= 500"
-        },
         "initial": {
           ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 7200"
         },
