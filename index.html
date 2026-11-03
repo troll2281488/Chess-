@@ -54,27 +54,38 @@ function tap(sq){
  if(gameFinished())return;
  const piece=chess.get(sq);
  const canPlay=(mode!=="online"||chess.turn()===myColor)&&(mode!=="bot"||chess.turn()!==botColor);
- if(selected&&canPlay){
+ if(!canPlay){
+  if(piece&&piece.color!==chess.turn()&&mode==="online"){selected=null;legal=[];previewOpponentMoves(sq);render();return}
+  return;
+ }
+ if(selected){
   const fresh=chess.moves({square:selected,verbose:true});
   const move=fresh.find(m=>m.to===sq);
   if(move){
    const opts={from:selected,to:sq};
    if(move.promotion){const pr=(prompt("Превратить пешку в: q — ферзь, r — ладья, b — слон, n — конь","q")||"q").toLowerCase();opts.promotion=["q","r","b","n"].includes(pr)?pr:"q"}
-   selected=null;legal=[];previewMoves=[];previewSquare=null;render();makeMove(opts);return;
+   makeMove(opts);return;
   }
  }
- if(piece&&piece.color===chess.turn()&&canPlay){
+ if(piece&&piece.color===chess.turn()){
   selected=sq;legal=chess.moves({square:sq,verbose:true});previewMoves=[];previewSquare=null;
  }else if(piece&&piece.color!==chess.turn()){
   selected=null;legal=[];previewOpponentMoves(sq);
-  if(!canPlay&&mode==="online")gameToast("Сейчас ход соперника");
  }else{
   selected=null;legal=[];previewMoves=[];previewSquare=null;
  }
  render();
 }
-
-async function makeMove(m){const move=chess.move(m);if(!move)return;history.push(move);selected=null;legal=[];previewMoves=[];previewSquare=null;render();if($("sound").checked){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=move.captured?260:420;g.gain.value=.035;o.start();o.stop(a.currentTime+.055)}catch{}}if(mode==="online")await pushRoom(move.color);if(mode==="bot"&&!gameFinished()&&chess.turn()===botColor)setTimeout(botMove,260)}
+async function makeMove(m){
+ let move;
+ try{move=chess.move(m)}catch(e){console.warn("Move rejected:",m,e);gameToast("Этот ход сейчас недоступен");return false}
+ if(!move){gameToast("Этот ход сейчас недоступен");return false}
+ history.push(move);selected=null;legal=[];previewMoves=[];previewSquare=null;render();
+ if($("sound").checked){try{const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.frequency.value=move.captured?260:420;g.gain.value=.035;o.start();o.stop(a.currentTime+.055)}catch{}}
+ if(mode==="online")await pushRoom(move.color);
+ if(mode==="bot"&&!gameFinished()&&chess.turn()===botColor)setTimeout(botMove,260);
+ return true;
+}
 function resetGame(){if($("confirmReset").checked&&!confirm("Начать новую партию?"))return;chess.reset();history=[];selected=null;legal=[];previewMoves=[];previewSquare=null;render();if(mode==="online")pushRoom()}
 function startGame(){resultShown=false;$("resultOverlay").classList.add("hidden");showView("game");render()}
 function botMove(){if(gameFinished())return;const moves=chess.moves({verbose:true});if(!moves.length)return;const vals={p:100,n:310,b:330,r:500,q:900};let chosen;if($("difficulty").value==="easy")chosen=moves[Math.floor(Math.random()*moves.length)];else{const score=m=>(m.captured?(vals[m.captured]||0)*1.05:0)+(m.promotion?800:0)+(m.san.includes("+")?35:0)+(m.san.includes("#")?100000:0)+Math.random()*35;if($("difficulty").value==="normal")chosen=moves.sort((a,b)=>score(b)-score(a))[0];else{chosen=moves.map(m=>{chess.move(m);const opp=chess.moves({verbose:true}),threat=opp.reduce((v,x)=>v+(vals[x.captured]||0),0);chess.undo();return{m,s:score(m)-threat*.12}}).sort((a,b)=>b.s-a.s)[0].m}}makeMove({from:chosen.from,to:chosen.to,promotion:chosen.promotion||"q"})}
