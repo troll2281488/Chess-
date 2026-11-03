@@ -12,7 +12,6 @@
         "guest": { ".validate": "newData.val() === null || newData.val() === auth.uid || newData.val() === data.val()" },
         "hostName": { ".validate": "newData.isString() && newData.val().length <= 24" },
         "guestName": { ".validate": "newData.val() === null || (newData.isString() && newData.val().length <= 24)" },
-        "fen": { ".validate": "newData.isString() && newData.val().length <= 120" },
         "moves": { ".validate": "newData.isList() && newData.numChildren() <= 500" },
         "createdAt": { ".validate": "newData.isNumber() || newData.hasChildren()" },
         "updatedAt": { ".validate": "newData.isNumber() || newData.hasChildren()" },
