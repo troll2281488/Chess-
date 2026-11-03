@@ -57,6 +57,9 @@
           "increment": {
             ".validate": "newData.isNumber()"
           }
+        },
+        "moves": {
+          ".validate": "true"
         }
       }
     },
