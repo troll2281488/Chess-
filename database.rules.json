@@ -60,6 +60,9 @@
         },
         "moves": {
           ".validate": "true"
+        },
+        "hostColor": {
+          ".validate": "newData.val() === 'w' || newData.val() === 'b'"
         }
       }
     },
